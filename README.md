@@ -1,10 +1,12 @@
-# MoonTV
+# MoonTV-Edgeone
 
 <div align="center">
   <img src="public/logo.png" alt="MoonTV Logo" width="120">
 </div>
 
-> 🎬 **MoonTV** 是一个开箱即用的、跨平台的影视聚合播放器。它基于 **Next.js 14** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多资源搜索、在线播放、收藏同步、播放记录、云端存储，让你可以随时随地畅享海量免费影视内容。
+> 🎬 **MoonTV-Edgeone** 是基于 [MoonTechLab/LunaTV](https://github.com/MoonTechLab/LunaTV)（MoonTV）的 **EdgeOne Pages / Makers** 适配版本。它保留原项目全部功能，将数据存储迁移到 **EdgeOne Blob**，支持在腾讯云 EdgeOne 免费全栈平台零服务器部署。
+>
+> 基于 **Next.js 14** + **Tailwind CSS** + **TypeScript** 构建，支持多资源搜索、在线播放、收藏同步、播放记录、云端存储，让你可以随时随地畅享海量免费影视内容。
 
 <div align="center">
 
@@ -12,7 +14,7 @@
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38bdf8?logo=tailwindcss)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.x-3178c6?logo=typescript)
 ![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green)
-![Docker Ready](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
+![EdgeOne](https://img.shields.io/badge/Deploy-EdgeOne%20Pages-0064ff)
 
 </div>
 
@@ -23,7 +25,8 @@
 - 🔍 **多源聚合搜索**：一次搜索立刻返回全源结果。
 - 📄 **丰富详情页**：支持剧集列表、演员、年份、简介等完整信息展示。
 - ▶️ **流畅在线播放**：集成 HLS.js & ArtPlayer。
-- ❤️ **收藏 + 继续观看**：支持 Kvrocks/Redis/Upstash 存储，多端同步进度。
+- ❤️ **收藏 + 继续观看**：支持 EdgeOne Blob / Kvrocks / Redis / Upstash 存储，多端同步进度。
+- ☁️ **EdgeOne Blob 存储**：数据持久化在腾讯云 EdgeOne Blob 对象存储中，Serverless 部署无需自建数据库。
 - 📱 **PWA**：离线缓存、安装到桌面/主屏，移动端原生体验。
 - 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
 - 👿 **智能去广告**：自动跳过视频中的切片广告（实验性）。
@@ -37,21 +40,21 @@
   <img src="public/screenshot3.png" alt="项目截图" style="max-width:600px">
 </details>
 
-### 请不要在 B站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
+### 请不要在 B站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何"科技周刊/月刊"类项目或站点收录本项目。
 
 ## 🗺 目录
 
 - [技术栈](#技术栈)
-- [部署](#部署)
-  - [一键部署](#zeabur-一键部署)
-  - [Docker 部署](#Kvrocks-存储推荐)
+- [部署（EdgeOne Pages / Makers）](#部署edgeone-pages--makers详细步骤)
+  - [方式一：EdgeOne 部署（推荐）](#方式一edgeone-部署推荐)
+  - [方式二：Docker 部署（备选）](#方式二docker-部署备选)
+  - [存储说明（EdgeOne Blob）](#存储说明edgeone-blob)
+- [常见问题 FAQ](#常见问题-faq)
 - [配置文件](#配置文件)
 - [订阅](#订阅)
-- [自动更新](#自动更新)
 - [环境变量](#环境变量)
 - [客户端](#客户端)
 - [AndroidTV 使用](#AndroidTV-使用)
-- [Roadmap](#roadmap)
 - [安全与隐私提醒](#安全与隐私提醒)
 - [License](#license)
 - [致谢](#致谢)
@@ -64,28 +67,86 @@
 | UI & 样式 | [Tailwind&nbsp;CSS 3](https://tailwindcss.com/)                                                       |
 | 语言      | TypeScript 4                                                                                          |
 | 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
+| 存储      | [@edgeone/pages-blob](https://www.npmjs.com/package/@edgeone/pages-blob)（EdgeOne Blob）              |
 | 代码质量  | ESLint · Prettier · Jest                                                                              |
-| 部署      | Docker                                                                    |
+| 部署      | EdgeOne Pages / Makers · Docker（备选）                                                               |
 
-## 部署
+## 部署（EdgeOne Pages / Makers 详细步骤）
 
-本项目**仅支持 Docker 或其他基于 Docker 的平台** 部署。
+本项目已针对 **EdgeOne Pages（现名 EdgeOne Makers）** 全栈平台做过兼容适配：Next.js 构建、Blob 存储、中间件认证均可在该平台正常工作，**无需服务器、无需信用卡，免费额度即可个人使用**。
 
-### zeabur 一键部署
+### 方式一：EdgeOne 部署（推荐）
 
-点击下方按钮即可一键部署，自动配置 LunaTV + Kvrocks 数据库：
+#### 第 1 步：准备 GitHub 仓库
 
-[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/8MPTQU/deploy)
+1. 在 GitHub 上 **Fork** 本仓库（`MoonTV-Edgeone`），或把代码推到你自己账号下的仓库。
+2. 确保仓库根目录有 `pnpm-lock.yaml`（EdgeOne 会据此自动选择 pnpm 安装依赖）。
 
-**优势**：
-- ✅ 无需配置，一键启动（自动部署完整环境）
-- ✅ 自动 HTTPS 和全球 CDN 加速
-- ✅ 持久化存储，数据永不丢失
-- ✅ 免费额度足够个人使用
+#### 第 2 步：在 EdgeOne 创建项目并连接仓库
 
-**⚠️ 重要提示**：部署完成后，需要在 Zeabur 中为 LunaTV 服务设置访问域名（Domain）才能在浏览器中访问。详见下方 [设置访问域名](#5-设置访问域名必须) 步骤。
+1. 打开 [EdgeOne Makers 控制台](https://edgeone.ai/zh/products/pages)（腾讯云账号登录；国内版也可从腾讯云控制台 → EdgeOne → Pages / Makers 进入）。
+2. 点击 **「新建项目」→「连接 Git 仓库」**，授权 GitHub 并选择你的仓库。
 
-### Kvrocks 存储（推荐）
+#### 第 3 步：构建设置
+
+框架预设选择 **Next.js**，其余建议如下：
+
+| 配置项 | 值 |
+|---|---|
+| 框架预设 | Next.js |
+| 安装命令 | `pnpm install`（平台根据 lockfile 自动识别） |
+| 构建命令 | `pnpm build` |
+| 输出目录 | `.next`（Next.js 默认，自动识别） |
+| **Node.js 版本** | **`20.18.0`**（⚠️ 重要，见下方说明） |
+
+> ⚠️ **Node 版本必填 `20.18.0`**：仓库根目录的 `.nvmrc` 已指向该版本。EdgeOne 只预装固定的几个 Node 版本（14.21.3 / 16.20.2 / 18.20.4 / **20.18.0** / 22.11.0 / 22.17.1 / 22.21.1 / 24.x），如果你在项目设置里改了 Node 版本，请务必保持为预装列表内的版本，否则构建会报 `Failed to switch to Node.js`。
+
+#### 第 4 步：配置环境变量
+
+在项目的 **环境变量** 中添加：
+
+```env
+# ---- 必填 ----
+NEXT_PUBLIC_STORAGE_TYPE=blob
+USERNAME=admin
+PASSWORD=换成你的强密码
+
+# ---- 可选 ----
+BLOB_STORE_NAME=moontv                      # EdgeOne Blob 命名空间名，默认 moontv
+NEXT_PUBLIC_SITE_NAME=MoonTV-Edgeone        # 站点名（默认已是 MoonTV-Edgeone）
+ANNOUNCEMENT=你的公告                        # 站点公告
+
+# ---- 可选：豆瓣代理（国内加速推荐）----
+NEXT_PUBLIC_DOUBAN_PROXY_TYPE=cmliussss-cdn-tencent
+NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE=cmliussss-cdn-tencent
+
+# ---- 可选：Blob 外部访问凭据（一般无需配置）----
+# BLOB_PROJECT_ID=pages-xxxx
+# BLOB_API_TOKEN=xxxx
+```
+
+> **说明**：部署在 EdgeOne 内部时，Blob 采用 name-only 模式（平台自动鉴权、首次调用自动创建命名空间），**无需**配置 `BLOB_PROJECT_ID` / `BLOB_API_TOKEN`。这两个变量仅供在本地脚本或其他外部服务中访问 Blob 时使用。
+
+#### 第 5 步：部署
+
+1. 点击 **部署**，等待构建完成（首次约 1–3 分钟）。
+2. 部署成功后，平台分配 `xxx.edgeone.app`（或 `xxx.edgeone.dev`）免费域名，自动 HTTPS。
+
+#### 第 6 步：（可选）绑定自定义域名
+
+1. 控制台 **域名 → 添加域名**，按提示配置 DNS CNAME 记录。
+2. 平台自动签发 SSL 证书。
+3. ⚠️ 若域名要接入**中国大陆节点加速**，需要 ICP 备案；使用默认分配的 `edgeone.app` 域名则不需要。
+
+#### 第 7 步：首次使用与验证
+
+1. 浏览器打开分配的域名 → 会自动跳转登录页 → 用 `admin` + 密码登录。
+2. **验证 Blob 存储**：登录后做任意数据操作（如后台保存一次播放源配置、收藏一部剧），然后到 EdgeOne 控制台 **Storage → Blob** 页面，应能看到 `moontv` 命名空间及其中的对象（如 `sys/admin-config`、`fav/...`、`pr/...`）。
+3. **配置播放源**：登录后台 → **配置文件设置**，填入苹果 CMS V10 格式的播放源（项目为空壳，播放源需自行收集，格式见 [配置文件](#配置文件)）。
+
+### 方式二：Docker 部署（备选）
+
+本项目同样保留原项目的 Docker 部署能力（数据存储使用 Kvrocks / Redis / Upstash 时）。
 
 ```yml
 services:
@@ -119,149 +180,44 @@ volumes:
   kvrocks-data:
 ```
 
-### Redis 存储（有一定的丢数据风险）
+> Redis / Upstash 存储的 compose 配置与原项目一致（分别设置 `REDIS_URL` 或 `UPSTASH_URL` / `UPSTASH_TOKEN`，并将 `NEXT_PUBLIC_STORAGE_TYPE` 改为 `redis` / `upstash`）。
 
-```yml
-services:
-  moontv-core:
-    image: ghcr.io/moontechlab/lunatv:latest
-    container_name: moontv-core
-    restart: on-failure
-    ports:
-      - '3000:3000'
-    environment:
-      - USERNAME=admin
-      - PASSWORD=admin_password
-      - NEXT_PUBLIC_STORAGE_TYPE=redis
-      - REDIS_URL=redis://moontv-redis:6379
-    networks:
-      - moontv-network
-    depends_on:
-      - moontv-redis
-  moontv-redis:
-    image: redis:alpine
-    container_name: moontv-redis
-    restart: unless-stopped
-    networks:
-      - moontv-network
-    # 请开启持久化，否则升级/重启后数据丢失
-    volumes:
-      - ./data:/data
-networks:
-  moontv-network:
-    driver: bridge
+### 存储说明（EdgeOne Blob）
+
+当 `NEXT_PUBLIC_STORAGE_TYPE=blob` 时，数据全部持久化在 **EdgeOne Blob**（分布式对象存储，免费版 1GB 额度），Key 布局如下：
+
+```
+pr/{user}/{source}+{id}    -> JSON 播放记录
+fav/{user}/{source}+{id}   -> JSON 收藏
+user/{user}                -> 加盐哈希后的密码
+sh/{user}                  -> JSON 搜索历史（最多 20 条）
+skip/{user}/{source}+{id}  -> JSON 跳过片头片尾配置
+sys/admin-config           -> JSON 站长配置
 ```
 
-### Upstash 存储
+- 读取统一使用 **强一致模式**（`consistency: 'strong'`），保证登录校验、配置、收藏/播放记录的实时性。
+- 控制台 **Storage → Blob** 可只读浏览命名空间与对象目录结构。
+- 命名空间由 SDK 首次调用时自动创建，无需在控制台手动创建。
 
-1. 在 [upstash](https://upstash.com/) 注册账号并新建一个 Redis 实例，名称任意。
-2. 复制新数据库的 **HTTPS ENDPOINT 和 TOKEN**
-3. 使用如下 docker compose
-```yml
-services:
-  moontv-core:
-    image: ghcr.io/moontechlab/lunatv:latest
-    container_name: moontv-core
-    restart: on-failure
-    ports:
-      - '3000:3000'
-    environment:
-      - USERNAME=admin
-      - PASSWORD=admin_password
-      - NEXT_PUBLIC_STORAGE_TYPE=upstash
-      - UPSTASH_URL=上面 https 开头的 HTTPS ENDPOINT
-      - UPSTASH_TOKEN=上面的 TOKEN
-```
+## 常见问题 FAQ
 
-### ☁️ Zeabur 部署（推荐）
+**Q1：构建报 `Failed to switch to Node.js v20.10.0`？**
+> `.nvmrc` 指向的版本不在 EdgeOne 预装列表内。本仓库已改为 `v20.18.0`（预装版本）。若仍报错，请在项目设置 → Node.js Version 手动选择 `20.18.0`。
 
-Thanks to @SzeMeng76
+**Q2：构建期报 `PagesBlobError: Missing: token`？**
+> 这是 `next build` 阶段（非运行时）加载 API 路由时尝试连接 Blob 所致。本仓库已修复：构建阶段自动跳过 Blob 连接（日志会出现 `EdgeOne Blob: skipping connection during build phase`），不影响运行时存储。
 
-Zeabur 是一站式云端部署平台，使用预构建的 Docker 镜像可以快速部署，无需等待构建。
+**Q3：部署后网页报 `Error return from script` / 一直重定向到登录页？**
+> 原项目中间件依赖 `config.matcher` 排除公开路径，EdgeOne 适配器对该写法支持不完整导致所有路径（含 `/login`、静态资源）都被认证拦截，形成重定向死循环。本仓库已修复：公开路径判断全部移入中间件内部（`shouldSkipAuth`），`matcher` 改为全匹配。
 
-**部署步骤：**
+**Q4：数据存在哪里？构建阶段不连 Blob 会不会丢数据？**
+> 不会。构建阶段只是编译代码、产出静态文件，本就不需要存储；**运行时**（你登录、收藏、播放时）API 路由才真正读写 EdgeOne Blob，数据持久化在 `moontv` 命名空间。
 
-1. **添加 KVRocks 服务**（先添加数据库）
-   - 点击 "Add Service" > "Docker Images"
-   - 输入镜像名称：`apache/kvrocks`
-   - 配置端口：`6666` (TCP)
-   - **记住服务名称**（通常是 `apachekvrocks`）
-   - **配置持久化卷（重要）**：
-     * 在服务设置中找到 "Volumes" 部分
-     * 点击 "Add Volume" 添加新卷
-     * Volume ID: `kvrocks-data`（可自定义，仅支持字母、数字、连字符）
-     * Path: `/var/lib/kvrocks/db`
-     * 保存配置
+**Q5：如何手动指定 Blob 外部访问凭据？**
+> 在环境变量中设置 `BLOB_PROJECT_ID`（形如 `pages-xxxx`）与 `BLOB_API_TOKEN`（在 EdgeOne 控制台 API Token 页创建），SDK 将自动切换为显式 token 模式。
 
-   > 💡 **重要提示**：持久化卷路径必须设置为 `/var/lib/kvrocks/db`（KVRocks 数据目录），这样配置文件保留在容器内，数据库文件持久化，重启后数据不会丢失！
-
-2. **添加 LunaTV 服务**
-   - 点击 "Add Service" > "Docker Images"
-   - 输入镜像名称：`ghcr.io/moontechlab/lunatv:latest`
-   - 配置端口：`3000` (HTTP)
-
-3. **配置环境变量**
-
-   在 LunaTV 服务的环境变量中添加：
-
-   ```env
-   # 必填：管理员账号
-   USERNAME=admin
-   PASSWORD=your_secure_password
-
-   # 必填：存储配置
-   NEXT_PUBLIC_STORAGE_TYPE=kvrocks
-   KVROCKS_URL=redis://apachekvrocks:6666
-
-   # 可选：站点配置
-   SITE_BASE=https://your-domain.zeabur.app
-   NEXT_PUBLIC_SITE_NAME=LunaTV Enhanced
-   ANNOUNCEMENT=欢迎使用 LunaTV Enhanced Edition
-
-   # 可选：豆瓣代理配置（推荐）
-   NEXT_PUBLIC_DOUBAN_PROXY_TYPE=cmliussss-cdn-tencent
-   NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE=cmliussss-cdn-tencent
-   ```
-
-   **注意**：
-   - 使用服务名称作为主机名：`redis://apachekvrocks:6666`
-   - 如果服务名称不同，请替换为实际名称
-   - 两个服务必须在同一个 Project 中
-
-4. **部署完成**
-   - Zeabur 会自动拉取镜像并启动服务
-   - 等待服务就绪后，需要手动设置访问域名（见下一步）
-
-#### 5. 设置访问域名（必须）
-
-   - 在 LunaTV 服务页面，点击 "Networking" 或 "网络" 标签
-   - 点击 "Generate Domain" 生成 Zeabur 提供的免费域名（如 `xxx.zeabur.app`）
-   - 或者绑定自定义域名：
-     * 点击 "Add Domain" 添加你的域名
-     * 按照提示配置 DNS CNAME 记录指向 Zeabur 提供的目标地址
-   - 设置完域名后即可通过域名访问 LunaTV
-
-6. **绑定自定义域名（可选）**
-   - 在服务设置中点击 "Domains"
-   - 添加你的自定义域名
-   - 配置 DNS CNAME 记录指向 Zeabur 提供的域名
-
-#### 🔄 更新 Docker 镜像
-
-当 Docker 镜像有新版本发布时，Zeabur 不会自动更新。需要手动触发更新。
-
-**更新步骤：**
-
-1. **进入服务页面**
-   - 点击需要更新的服务（LunaTV 或 KVRocks）
-
-2. **重启服务**
-   - 点击 **"服务状态"** 页面，再点击 **"重启当前版本"** 按钮
-   - Zeabur 会自动拉取最新的 `latest` 镜像并重新部署
-
-> 💡 **提示**：
-> - 使用 `latest` 标签时，Restart 会自动拉取最新镜像
-> - 生产环境推荐使用固定版本标签（如 `v5.5.6`）避免意外更新
+**Q6：安装依赖阶段报 husky 相关错误？**
+> 在 EdgeOne 构建环境变量中增加 `HUSKY=0` 即可跳过 git hooks 安装。
 
 ## 配置文件
 
@@ -314,12 +270,6 @@ MoonTV 支持标准的苹果 CMS V10 API 格式。
 
 将完整的配置文件 base58 编码后提供 http 服务即为订阅链接，可在 MoonTV 后台/Helios 中使用。
 
-## 自动更新
-
-可借助 [watchtower](https://github.com/containrrr/watchtower) 自动更新镜像容器
-
-dockge/komodo 等 docker compose UI 也有自动更新功能
-
 ## 环境变量
 
 | 变量                                | 说明                                         | 可选值                           | 默认值                                                                                                                     |
@@ -327,9 +277,12 @@ dockge/komodo 等 docker compose UI 也有自动更新功能
 | USERNAME                            | 站长账号           | 任意字符串                       | 无默认，必填字段                                                                                                                     |
 | PASSWORD                            | 站长密码           | 任意字符串                       | 无默认，必填字段                                                                                                                     |
 | SITE_BASE                           | 站点 url              |       形如 https://example.com                  | 空                                                                                                                     |
-| NEXT_PUBLIC_SITE_NAME               | 站点名称                                     | 任意字符串                       | MoonTV                                                                                                                     |
+| NEXT_PUBLIC_SITE_NAME               | 站点名称                                     | 任意字符串                       | MoonTV-Edgeone                                                                                                                     |
 | ANNOUNCEMENT                        | 站点公告                                     | 任意字符串                       | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
-| NEXT_PUBLIC_STORAGE_TYPE            | 播放记录/收藏的存储方式                      | redis、kvrocks、upstash | 无默认，必填字段                                                                                                               |
+| NEXT_PUBLIC_STORAGE_TYPE            | 播放记录/收藏的存储方式                      | blob、redis、kvrocks、upstash | 无默认，必填字段                                                                                                               |
+| BLOB_STORE_NAME                     | EdgeOne Blob 命名空间名                       | 任意字符串                       | moontv                                                                                                                      |
+| BLOB_PROJECT_ID                     | EdgeOne Blob 项目 ID（外部访问时用）          | 形如 pages-xxxx                  | 空                                                                                                                         |
+| BLOB_API_TOKEN                      | EdgeOne Blob API Token（外部访问时用）        | API Token                       | 空                                                                                                                         |
 | KVROCKS_URL                           | kvrocks 连接 url                               | 连接 url                         | 空                                                                                                                         |
 | REDIS_URL                           | redis 连接 url                               | 连接 url                         | 空                                                                                                                         |
 | UPSTASH_URL                         | upstash redis 连接 url                       | 连接 url                         | 空                                                                                                                         |
@@ -393,10 +346,11 @@ v100.0.0 以上版本可配合 [Selene](https://github.com/MoonTechLab/Selene) �
 
 [CC BY-NC-SA 4.0](LICENSE) © 2025 MoonTV & Contributors
 
-本项目采用 [知识共享 署名-非商业性使用-相同方式共享 4.0 国际许可协议](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)：禁止任何商业化行为；任何衍生项目必须保留本项目地址与版权署名，并以相同协议开源。
+本项目（MoonTV-Edgeone）是 [MoonTechLab/LunaTV](https://github.com/MoonTechLab/LunaTV)（MoonTV）的衍生项目，遵循原项目采用 [知识共享 署名-非商业性使用-相同方式共享 4.0 国际许可协议](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)：禁止任何商业化行为；任何衍生项目必须保留本项目地址与版权署名，并以相同协议开源。
 
 ## 致谢
 
+- [MoonTechLab/LunaTV](https://github.com/MoonTechLab/LunaTV) — 本项目基于的原项目。
 - [ts-nextjs-tailwind-starter](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter) — 项目最初基于该脚手架。
 - [LibreTV](https://github.com/LibreSpark/LibreTV) — 由此启发，站在巨人的肩膀上。
 - [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) — 提供强大的网页视频播放器。
