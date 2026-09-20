@@ -1630,7 +1630,10 @@ function PlayPageClient() {
       artPlayerRef.current.on('video:timeupdate', () => {
         const now = Date.now();
         let interval = 5000;
-        if (process.env.NEXT_PUBLIC_STORAGE_TYPE === 'upstash') {
+        if (
+          process.env.NEXT_PUBLIC_STORAGE_TYPE === 'upstash' ||
+          process.env.NEXT_PUBLIC_STORAGE_TYPE === 'blob'
+        ) {
           interval = 20000;
         }
         if (now - lastSaveTimeRef.current > interval) {
