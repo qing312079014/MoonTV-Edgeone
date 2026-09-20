@@ -118,21 +118,31 @@ function handleAuthFailure(
 // 判断是否需要跳过认证的路径
 function shouldSkipAuth(pathname: string): boolean {
   const skipPaths = [
+    // 静态资源
     '/_next',
     '/favicon.ico',
     '/robots.txt',
     '/manifest.json',
+    '/sw.js',
     '/icons/',
     '/logo.png',
     '/screenshot.png',
+    // 认证相关（无需登录即可访问）
+    '/login',
+    '/warning',
+    '/api/login',
+    '/api/register',
+    '/api/logout',
+    '/api/cron',
+    '/api/server-config',
   ];
 
   return skipPaths.some((path) => pathname.startsWith(path));
 }
 
 // 配置middleware匹配规则
+// 注意：部分平台（如 EdgeOne opennext 适配器）对 matcher 正则排除支持不完整，
+// 因此这里匹配所有路径，实际的公开路径判断全部放在 shouldSkipAuth 内部完成。
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|login|warning|api/login|api/register|api/logout|api/cron|api/server-config).*)',
-  ],
+  matcher: ['/:path*'],
 };
