@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-empty-function */
 
 import { getStore } from '@edgeone/pages-blob';
 import type { Store } from '@edgeone/pages-blob';
@@ -76,30 +76,63 @@ function getBlobStore(): Store {
   let store: Store | undefined = (global as any)[globalKey];
 
   if (!store) {
+    // 构建阶段（next build 收集路由数据）不是 Pages Functions 运行时，
+    // name-only 模式拿不到平台注入的 token 会抛 MISSING_ENVIRONMENT 导致构建失败，
+    // 因此构建时使用 no-op store，运行时再走真实连接。
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+      console.log('EdgeOne Blob: skipping connection during build phase');
+      store = createNoopStore();
+      (global as any)[globalKey] = store;
+      return store;
+    }
+
     const name = process.env.BLOB_STORE_NAME || 'moontv';
     const projectId = process.env.BLOB_PROJECT_ID;
     const token = process.env.BLOB_API_TOKEN;
 
-    if (projectId && token) {
-      // 外部访问模式（本地脚本 / 非 Pages Functions 环境）：需显式 projectId + token
-      store = getStore({ name, projectId, token, consistency: 'strong' });
-    } else {
-      // Pages Functions 内自动鉴权，仅需命名空间名
-      store = getStore(name);
-    }
+    try {
+      if (projectId && token) {
+        // 外部访问模式（本地脚本 / 非 Pages Functions 环境）：需显式 projectId + token
+        store = getStore({ name, projectId, token, consistency: 'strong' });
+      } else {
+        // Pages Functions 内自动鉴权，仅需命名空间名
+        store = getStore(name);
+      }
 
-    console.log('EdgeOne Blob store created successfully');
+      console.log('EdgeOne Blob store created successfully');
+    } catch (err) {
+      // 运行环境未注入 Blob 凭据时降级为 no-op，避免 API 直接抛错
+      console.error(
+        'EdgeOne Blob store init failed, using no-op store:',
+        err
+      );
+      store = createNoopStore();
+    }
     (global as any)[globalKey] = store;
   }
 
   return store;
 }
 
-export class BlobStorage implements IStorage {
-  private store: Store;
+// 构建阶段 / 无凭据环境使用的空实现，避免构建与页面渲染期间抛错
+function createNoopStore(): Store {
+  return {
+    set: async () => {},
+    setJSON: async () => {},
+    get: async () => null,
+    getMetadata: async () => null,
+    getWithHeaders: async () => null,
+    delete: async () => {},
+    list: async () => ({ blobs: [], directories: [] }),
+    createUploadUrl: async () => {
+      throw new Error('EdgeOne Blob is not available in this environment');
+    },
+  } as unknown as Store;
+}
 
-  constructor() {
-    this.store = getBlobStore();
+export class BlobStorage implements IStorage {
+  private get store(): Store {
+    return getBlobStore();
   }
 
   // ---------- 通用工具 ----------
