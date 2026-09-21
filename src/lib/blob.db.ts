@@ -255,7 +255,9 @@ export class BlobStorage implements IStorage {
   }
 
   async registerUser(userName: string, password: string): Promise<void> {
-    const hashed = hashPassword(password);
+    // 幂等存储：若传入的已是加盐哈希（如从其他平台迁移的密码），原样存储，
+    // 避免二次哈希导致用户无法用原密码登录
+    const hashed = isHashed(password) ? password : hashPassword(password);
     await withRetry(() => this.store.set(this.userPwdKey(userName), hashed));
   }
 
