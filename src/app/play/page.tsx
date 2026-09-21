@@ -1263,22 +1263,27 @@ function PlayPageClient() {
       typeof window !== 'undefined' &&
       typeof (window as any).webkitConvertPointFromNodeToPage === 'function';
 
-    // 非WebKit浏览器且播放器已存在，使用switch方法切换
-    if (!isWebkit && artPlayerRef.current) {
-      artPlayerRef.current.switch = videoUrl;
-      artPlayerRef.current.title = `${videoTitle} - 第${currentEpisodeIndex + 1
-        }集`;
-      artPlayerRef.current.poster = videoCover;
-      if (artPlayerRef.current?.video) {
+    // 播放器已存在：优先使用 switch 方法切换 URL（复用播放器与已授予的播放许可）。
+    // 注意：移动端（iOS Safari 等 WebKit 内核）旧逻辑会走"销毁+重建"，而重建发生在
+    // effect 的异步回调中，已不在用户点击手势上下文，浏览器自动播放策略会拦截新实例
+    // 的 play()，导致选集/换源后视频不切换、看起来"没反应"。统一走 switch 可避免该问题。
+    if (artPlayerRef.current?.video) {
+      try {
+        artPlayerRef.current.switch = videoUrl;
+        artPlayerRef.current.title = `${videoTitle} - 第${currentEpisodeIndex + 1
+          }集`;
+        artPlayerRef.current.poster = videoCover;
         ensureVideoSource(
           artPlayerRef.current.video as HTMLVideoElement,
           videoUrl
         );
+        return;
+      } catch (err) {
+        console.error('播放器 switch 切换失败，改为重建:', err);
       }
-      return;
     }
 
-    // WebKit浏览器或首次创建：销毁之前的播放器实例并创建新的
+    // 首次创建或 switch 失败：销毁之前的播放器实例并创建新的
     if (artPlayerRef.current) {
       cleanupPlayer();
     }
