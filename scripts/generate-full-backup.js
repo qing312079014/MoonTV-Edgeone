@@ -114,6 +114,21 @@ async function main() {
     console.log(`  ✅ ${username}: 播放${Object.keys(u.playRecords).length} 收藏${Object.keys(u.favorites).length} 搜索${u.searchHistory.length} 跳过${Object.keys(u.skipConfigs).length}`);
   }
 
+  // 3.5 复制用户数据（目标 ← 来源），例如把 qing1 的数据复制给 qing312
+  const COPY_USERS = { qing312: 'qing1' };
+  for (const [target, source] of Object.entries(COPY_USERS)) {
+    if (!userData[source]) {
+      console.warn(`⚠️ 复制用户失败：来源 ${source} 不存在`);
+      continue;
+    }
+    if (userData[target]) {
+      console.warn(`⚠️ 目标用户 ${target} 已存在，跳过复制（如需覆盖请先改名）`);
+      continue;
+    }
+    userData[target] = JSON.parse(JSON.stringify(userData[source]));
+    console.log(`👥 已复制用户 ${source} → ${target}（含密码哈希，可用 ${source} 的原密码登录）`);
+  }
+
   // 4. 组装 + 压缩 + 加密
   const exportData = {
     timestamp: new Date().toISOString(),
