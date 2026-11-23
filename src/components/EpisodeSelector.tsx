@@ -624,8 +624,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                             {(source.episodes_count || source.episodes.length) >
                               1 && (
                               <span className='text-xs text-gray-500 dark:text-gray-400 font-medium'>
-                                {source.episodes_count || source.episodes.length}{' '}
-                                集
+                                {source.episodes_count || source.episodes.length} 集
                               </span>
                             )}
                           </div>
