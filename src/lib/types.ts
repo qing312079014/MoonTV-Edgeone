@@ -100,6 +100,7 @@ export interface SearchResult {
   poster: string;
   episodes: string[];
   episodes_titles: string[];
+  episodes_count?: number; // 真实集数（搜索摘要接口不返回完整地址列表）
   source: string;
   source_name: string;
   class?: string;

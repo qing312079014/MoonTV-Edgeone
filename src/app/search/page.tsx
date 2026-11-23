@@ -12,6 +12,7 @@ import {
   getSearchHistory,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { readJsonSafe } from '@/lib/http';
 import { SearchResult } from '@/lib/types';
 
 import PageLayout from '@/components/PageLayout';
@@ -163,7 +164,7 @@ function SearchPageClient() {
     searchResults.forEach((item) => {
       // 使用 title + year + type 作为键，year 必然存在，但依然兜底 'unknown'
       const key = `${item.title.replaceAll(' ', '')}-${item.year || 'unknown'
-        }-${item.episodes.length === 1 ? 'movie' : 'tv'}`;
+        }-${(item.episodes_count || item.episodes.length) === 1 ? 'movie' : 'tv'}`;
       const arr = map.get(key) || [];
 
       // 如果是新的键，记录其顺序
@@ -531,7 +532,7 @@ function SearchPageClient() {
       } else {
         // 传统搜索：使用普通接口
         fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
-          .then(response => response.json())
+          .then(response => readJsonSafe<{ results: SearchResult[] }>(response))
           .then(data => {
             if (currentQueryRef.current !== trimmed) return;
 
@@ -816,7 +817,7 @@ function SearchPageClient() {
                             id={item.id}
                             title={item.title}
                             poster={item.poster}
-                            episodes={item.episodes.length}
+                            episodes={item.episodes_count || item.episodes.length}
                             source={item.source}
                             source_name={item.source_name}
                             douban_id={item.douban_id}
@@ -827,7 +828,11 @@ function SearchPageClient() {
                             }
                             year={item.year}
                             from='search'
-                            type={item.episodes.length > 1 ? 'tv' : 'movie'}
+                            type={
+                              (item.episodes_count || item.episodes.length) > 1
+                                ? 'tv'
+                                : 'movie'
+                            }
                           />
                         </div>
                       )}

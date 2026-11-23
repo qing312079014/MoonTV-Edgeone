@@ -21,6 +21,7 @@ import {
   saveSkipConfig,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { readJsonSafe } from '@/lib/http';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
 
@@ -209,6 +210,27 @@ function PlayPageClient() {
   // -----------------------------------------------------------------------------
   // 工具函数（Utils）
   // -----------------------------------------------------------------------------
+
+  // 按 source + id 拉取完整详情（包含全部剧集地址）
+  // 搜索结果只返回剧集摘要，播放或换源前必须在这里补齐
+  const fetchDetailBySourceId = async (
+    source: string,
+    id: string
+  ): Promise<SearchResult | null> => {
+    try {
+      const response = await fetch(
+        `/api/detail?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`
+      );
+      if (!response.ok) {
+        console.error('获取视频详情失败:', response.status);
+        return null;
+      }
+      return await readJsonSafe<SearchResult>(response);
+    } catch (err) {
+      console.error('获取视频详情失败:', err);
+      return null;
+    }
+  };
 
   // 播放源优选函数
   const preferBestSource = async (
@@ -659,13 +681,10 @@ function PlayPageClient() {
       id: string
     ): Promise<SearchResult[]> => {
       try {
-        const detailResponse = await fetch(
-          `/api/detail?source=${source}&id=${id}`
-        );
-        if (!detailResponse.ok) {
+        const detailData = await fetchDetailBySourceId(source, id);
+        if (!detailData) {
           throw new Error('获取视频详情失败');
         }
-        const detailData = (await detailResponse.json()) as SearchResult;
         setAvailableSources([detailData]);
         return [detailData];
       } catch (err) {
@@ -684,7 +703,7 @@ function PlayPageClient() {
         if (!response.ok) {
           throw new Error('搜索失败');
         }
-        const data = await response.json();
+        const data = await readJsonSafe<{ results: SearchResult[] }>(response);
 
         // 处理搜索结果，根据规则过滤
         const results = data.results.filter(
@@ -767,6 +786,19 @@ function PlayPageClient() {
       }
 
       console.log(detailData.source, detailData.id);
+
+      // 搜索结果只带剧集摘要，正式播放前补齐完整剧集列表
+      if (
+        (detailData.episodes?.length || 0) < (detailData.episodes_count || 0)
+      ) {
+        const fullDetail = await fetchDetailBySourceId(
+          detailData.source,
+          detailData.id
+        );
+        if (fullDetail && fullDetail.episodes.length > 0) {
+          detailData = fullDetail;
+        }
+      }
 
       setNeedPrefer(false);
       setCurrentSource(detailData.source);
@@ -892,13 +924,20 @@ function PlayPageClient() {
         }
       }
 
-      const newDetail = availableSources.find(
+      const cachedDetail = availableSources.find(
         (source) => source.source === newSource && source.id === newId
       );
-      if (!newDetail) {
+      if (!cachedDetail) {
         setError('未找到匹配结果');
         return;
       }
+
+      // 摘要数据只带 1 条剧集地址，换源时必须拉完整列表，否则只能播第一集
+      const newDetail =
+        (cachedDetail.episodes?.length || 0) >=
+        (cachedDetail.episodes_count || 0)
+          ? cachedDetail
+          : (await fetchDetailBySourceId(newSource, newId)) || cachedDetail;
 
       // 尝试跳转到当前正在播放的集数
       let targetIndex = currentEpisodeIndex;

@@ -15,6 +15,7 @@
  */
 
 import { getAuthInfoFromBrowserCookie } from './auth';
+import { readJsonSafe } from './http';
 import { SkipConfig } from './types';
 
 // 全局错误触发函数
@@ -487,7 +488,7 @@ async function fetchWithAuth(
 
 async function fetchFromApi<T>(path: string): Promise<T> {
   const res = await fetchWithAuth(path);
-  return (await res.json()) as T;
+  return readJsonSafe<T>(res);
 }
 
 /**
