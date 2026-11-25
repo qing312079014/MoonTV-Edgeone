@@ -24,7 +24,7 @@ export const runtime = 'nodejs';
  * - 兼容旧客户端：带 ?full=1 仍返回完整列表，但仍受体积预算约束
  */
 const MAX_RESPONSE_BYTES = 640 * 1024; // 640 KB 安全线
-const MAX_RESULTS = 80; // 总结果条数上限
+const MAX_RESULTS = 240; // 总结果条数上限（摘要模式下每条仅数百字节）
 const MAX_RESULTS_PER_SITE = 10; // 单源结果条数上限
 const PREVIEW_EPISODES = 1; // 摘要模式保留的剧集地址数
 const MAX_EPISODES_PER_RESULT = 2000; // 完整模式单条最多保留的剧集数
@@ -91,21 +91,40 @@ function rankByQuery(results: any[], query: string): any[] {
   return [...results].sort((a, b) => score(a) - score(b));
 }
 
+/**
+ * 条数分配：先保证每个源至少留下 1 条，再按相关性补足单源配额。
+ *
+ * 原实现从前往后累加，达到总数上限就 break，
+ * 排序靠后的源会被整体丢掉，换源列表因此少一大截。
+ * 换源场景下「源的数量」远比「每源多少条」重要。
+ */
 function limitPerSite(results: any[]): any[] {
+  const kept = new Set<number>();
   const counter = new Map<string, number>();
-  const output: any[] = [];
 
-  for (const result of results) {
+  // 第一轮：每个源保留排名最靠前的一条，保证源覆盖
+  results.forEach((result, index) => {
+    const site = String(result.source ?? '');
+    if (counter.has(site)) return;
+
+    counter.set(site, 1);
+    kept.add(index);
+  });
+
+  // 第二轮：按排名补足每源配额，受总条数上限约束
+  results.forEach((result, index) => {
+    if (kept.has(index)) return;
+    if (kept.size >= MAX_RESULTS) return;
+
     const site = String(result.source ?? '');
     const used = counter.get(site) || 0;
-    if (used >= MAX_RESULTS_PER_SITE) continue;
+    if (used >= MAX_RESULTS_PER_SITE) return;
 
     counter.set(site, used + 1);
-    output.push(result);
-    if (output.length >= MAX_RESULTS) break;
-  }
+    kept.add(index);
+  });
 
-  return output;
+  return results.filter((_, index) => kept.has(index));
 }
 
 function compactResult(result: any, full: boolean) {
@@ -129,21 +148,46 @@ function compactResult(result: any, full: boolean) {
   };
 }
 
+/**
+ * 字节预算裁剪：同样先保源、再补条数。
+ * 否则预算不够时，排在尾部的源会被整段截掉。
+ */
 function fitBudget(results: any[], full: boolean): any[] {
-  const output: any[] = [];
+  const items = results.map((result) => {
+    const compact = compactResult(result, full);
+
+    return {
+      compact,
+      site: String(result.source ?? ''),
+      cost: Buffer.byteLength(JSON.stringify(compact), 'utf8'),
+    };
+  });
+
+  const kept = new Set<number>();
   let used = 0;
 
-  for (const result of results) {
-    const compact = compactResult(result, full);
-    const cost = Buffer.byteLength(JSON.stringify(compact), 'utf8');
-    // 至少保留一条，避免预算过小时返回空数组
-    if (output.length > 0 && used + cost > MAX_RESPONSE_BYTES) break;
+  // 第一轮：每源保底一条，确保换源列表不会因预算丢失整个源
+  const seenSite = new Set<string>();
+  items.forEach((item, index) => {
+    if (seenSite.has(item.site)) return;
 
-    output.push(compact);
-    used += cost;
-  }
+    seenSite.add(item.site);
+    kept.add(index);
+    used += item.cost;
+  });
 
-  return output;
+  // 第二轮：按排名补足，放不下的条目跳过
+  items.forEach((item, index) => {
+    if (kept.has(index)) return;
+    if (used + item.cost > MAX_RESPONSE_BYTES) return;
+
+    kept.add(index);
+    used += item.cost;
+  });
+
+  return items
+    .filter((_, index) => kept.has(index))
+    .map((item) => item.compact);
 }
 
 export async function GET(request: NextRequest) {

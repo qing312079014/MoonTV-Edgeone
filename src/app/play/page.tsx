@@ -706,18 +706,23 @@ function PlayPageClient() {
         const data = await readJsonSafe<{ results: SearchResult[] }>(response);
 
         // 处理搜索结果，根据规则过滤
-        const results = data.results.filter(
-          (result: SearchResult) =>
+        // 注意：搜索接口只返回剧集摘要（episodes 保留 1 条），
+        // 判断电影/剧集必须用 episodes_count，否则剧集会因 length === 1 被全部过滤掉
+        const results = data.results.filter((result: SearchResult) => {
+          const episodeCount = result.episodes_count ?? result.episodes.length;
+
+          return (
             result.title.replaceAll(' ', '').toLowerCase() ===
-            videoTitleRef.current.replaceAll(' ', '').toLowerCase() &&
+              videoTitleRef.current.replaceAll(' ', '').toLowerCase() &&
             (videoYearRef.current
               ? result.year.toLowerCase() === videoYearRef.current.toLowerCase()
               : true) &&
             (searchType
-              ? (searchType === 'tv' && result.episodes.length > 1) ||
-              (searchType === 'movie' && result.episodes.length === 1)
+              ? (searchType === 'tv' && episodeCount > 1) ||
+                (searchType === 'movie' && episodeCount === 1)
               : true)
-        );
+          );
+        });
         setAvailableSources(results);
         return results;
       } catch (err) {
