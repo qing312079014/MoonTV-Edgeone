@@ -31,9 +31,12 @@ const MAX_EPISODES_PER_RESULT = 2000; // 完整模式单条最多保留的剧集
 const MAX_DESC_LENGTH = 120; // 简介截断长度，详情接口会返回完整简介
 
 function buildHeaders(cacheTime: number, noStore: boolean) {
+  // max-age=0：浏览器一律不缓存，每次回源到 CDN。
+  // 否则部署新版本后，浏览器仍会用 2 小时前缓存的旧 JSON，看起来像「没生效」。
+  // s-maxage：仅 CDN 缓存，减少回源与函数执行次数。
   const cacheControl = noStore
     ? 'no-store'
-    : `public, max-age=${cacheTime}, s-maxage=${cacheTime}`;
+    : `public, max-age=0, s-maxage=${cacheTime}`;
 
   return {
     'Content-Type': 'application/json; charset=utf-8',
